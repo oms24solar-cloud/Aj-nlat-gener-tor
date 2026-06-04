@@ -1,0 +1,5 @@
+streamlit
+pandas
+Jinja2
+weasyprint
+openpyxl

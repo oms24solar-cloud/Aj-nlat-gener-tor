@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <title>Árajánlat</title>
+    <style>
+        @page { 
+            size: A4; 
+            margin: 2cm 1.5cm 2cm 1.5cm; 
+            
+            @top-right {
+                content: "Azonosító: {{ ugyfel.get('Ügylet azonosító:', '') }}   |   Kelt: {{ datum }}";
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                font-size: 11px;
+                color: #888888;
+            }
+            
+            @bottom-right {
+                content: "Oldal: " counter(page) " / " counter(pages);
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                font-size: 11px;
+                color: #888888;
+            }
+        }
+
+        @page :first {
+            margin-top: 1.5cm;
+            @top-right {
+                content: none;
+            }
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333333; margin: 0; padding: 10px; font-size: 13px; line-height: 1.5; }
+        
+        .header { border-bottom: 3px solid #95c31d; padding-bottom: 18px; margin-bottom: 25px; }
+        .logo { float: left; }
+        .doc-info { float: right; text-align: right; color: #635753; font-size: 12px; line-height: 1.6; }
+        
+        .main-title { text-align: center; font-size: 40px; font-weight: 900; color: #a09896; text-transform: uppercase; letter-spacing: 5px; line-height: 50px; }
+        
+        .clear { clear: both; }
+
+        .info-container { width: 100%; margin-bottom: 20px; }
+        .info-box { width: 48%; float: left; background-color: #f8faf4; border: 1px solid #e4e9db; padding: 18px; border-radius: 8px; box-sizing: border-box; }
+        .info-box.right { float: right; }
+        .info-box strong { color: #635753; display: block; border-bottom: 2px solid #95c31d; padding-bottom: 6px; margin-bottom: 10px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-row { margin-bottom: 4px; color: #555555; }
+        .info-row span { color: #222222; font-weight: 500; }
+
+        .subject-box { background-color: #fbfcf9; padding: 12px 18px; margin-bottom: 25px; border-radius: 6px; border: 1px solid #e4e9db; border-left: 5px solid #95c31d; }
+        .subject-box strong { color: #635753; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 10px; }
+        .subject-box span { font-size: 15px; font-weight: 600; color: #222222; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .main-table { margin-bottom: 0; } 
+        .totals-table { margin-bottom: 30px; page-break-inside: avoid; } 
+
+	tr { page-break-inside: avoid; }
+        
+        th { background-color: #635753; color: white; padding: 10px 12px; text-align: left; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; border: 1px solid #524744; }
+        td { padding: 10px 12px; border-bottom: 1px solid #e4e9db; color: #333333; word-break: break-word; }
+        
+        .main-table tr:nth-child(even) { background-color: #fdfdfe; }
+        .main-table tr:nth-child(odd) { background-color: #f8faf4; }
+        
+        .text-right { text-align: right; white-space: nowrap; }
+        
+        .subtotal-row { font-weight: bold; font-size: 13px; background-color: #f8faf4; color: #444; }
+        .subtotal-row td { border-top: 1px solid #e4e9db; padding: 10px 12px; }
+        
+        .total-row { font-weight: bold; font-size: 14px; background-color: #635753 !important; }
+        .total-row td { border-top: 2px solid #95c31d; padding: 12px; color: #ffffff !important; }
+        .total-price { color: #ffffff !important; font-size: 15px; text-align: right; white-space: nowrap; }
+
+        .conditions-wrapper { margin-top: 20px; }
+        
+        .condition-block { 
+            background-color: #fbfcf9; 
+            padding: 15px 20px; 
+            margin-bottom: 15px; 
+            border-radius: 6px; 
+            border: 1px solid #e4e9db; 
+            border-left: 5px solid #95c31d; 
+            page-break-inside: avoid; 
+        }
+        .condition-block:last-child { margin-bottom: 0; }
+        
+        .condition-block strong { color: #635753; font-size: 14px; margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e4e9db; padding-bottom: 4px; }
+        .condition-block ul { margin: 0; padding-left: 20px; line-height: 1.7; color: #555555; }
+        .condition-block li { margin-bottom: 4px; }
+
+        .signature-container { margin-top: 40px; width: 100%; page-break-inside: avoid; }
+        .signature-box { width: 40%; float: left; text-align: center; }
+        .signature-box.right { float: right; }
+        
+        /* A magasságot kicsit megnöveltem, hogy biztosan elférjen a kép és a térköz is */
+        .sign-space { height: 100px; text-align: center; display: flex; align-items: flex-end; justify-content: center; }
+        
+        .signature-line { border-top: 2px solid #635753; padding-top: 8px; font-weight: bold; color: #635753; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .signature-sub { font-size: 11px; font-weight: normal; color: #555555; text-transform: none; display: block; margin-top: 3px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo"><img src="OMS.png" alt="OMS24 Logó" style="height: 50px;"></div>
+        <div class="doc-info">
+            <strong>Kelt:</strong> <span>{{ datum }}</span><br>
+            <strong>Azonosító:</strong> <span>{{ ugyfel.get('Ügylet azonosító:', '') }}</span>
+        </div>
+        <div class="main-title">Árajánlat</div>
+        <div class="clear"></div>
+    </div>
+
+    <div class="info-container">
+        <div class="info-box">
+            <strong>Ajánlatkérő / Megrendelő</strong>
+            <div class="info-row">Név: <span>{{ ugyfel.get('neve:', '') }}</span></div>
+            <div class="info-row">Cím: <span>{{ ugyfel.get('címe:', '') }}</span></div>
+            <div class="info-row">Adószám: <span>{{ ugyfel.get('adószáma:', '') }}</span></div>
+            <div class="info-row">Telefon: <span>{{ ugyfel.get('tel./fax:', '') }}</span></div>
+            <div class="info-row">E-mail: <span>{{ ugyfel.get('e-mail:', '') }}</span></div>
+        </div>
+
+        <div class="info-box right">
+            <strong>Ajánlattevő / Vállalkozó</strong>
+            <div class="info-row">Név: <span>{{ ceg.get('neve:', '') }}</span></div>
+            <div class="info-row">Cím: <span>{{ ceg.get('címe:', '') }}</span></div>
+            <div class="info-row">Adószám: <span>{{ ceg.get('adószáma:', '') }}</span></div>
+            <div class="info-row">Cégj. szám: <span>{{ ceg.get('cégjegyzék száma:', '') }}</span></div>
+            <div class="info-row">E-mail: <span>{{ ceg.get('e-mail:', '') }}</span></div>
+        </div>
+        <div class="clear"></div>
+    </div>
+
+    {% set ajanlat_targya = ugyfel.get('Ajánlat tárgya:', ceg.get('Ajánlat tárgya:', '')) %}
+    {% if ajanlat_targya != "" %}
+    <div class="subject-box">
+        <strong>Ajánlat tárgya:</strong> <span>{{ ajanlat_targya }}</span>
+    </div>
+    {% endif %}
+
+    <table class="main-table">
+        <thead>
+            <tr>
+                {% for oszlop in oszlopok %}
+                    <th {% if 'tétel' in oszlop.lower() or 'megnevezés' in oszlop.lower() %}style="width: 40%;"{% endif %} 
+                        {% if 'ár' in oszlop.lower() or 'mennyiség' in oszlop.lower() or 'áfa' in oszlop.lower() %}class="text-right"{% endif %}>
+                        {{ oszlop.rstrip(' :') }}
+                    </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for tetel in tetelek %}
+            <tr>
+                {% for oszlop in oszlopok %}
+                    <td {% if 'ár' in oszlop.lower() or 'mennyiség' in oszlop.lower() or 'áfa' in oszlop.lower() %}class="text-right"{% endif %}>
+                        {% if tetel[oszlop] is number %}
+                            {% if 'ár' in oszlop.lower() or 'áfa' in oszlop.lower() %}
+                                {{ "{:,.0f}".format(tetel[oszlop]).replace(',', ' ') }} Ft
+                            {% elif 'mennyiség' in oszlop.lower() %}
+                                {{ "{:,.0f}".format(tetel[oszlop]).replace(',', ' ') }} db
+                            {% else %}
+                                {{ "{:,.0f}".format(tetel[oszlop]).replace(',', ' ') }}
+                            {% endif %}
+                        {% else %}
+                            {{ tetel[oszlop] }}
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <table class="totals-table">
+        <tbody>
+            {% if netto_osszesen != "" %}
+            <tr class="subtotal-row">
+                <td style="text-align: right;">Nettó összesen:</td>
+                <td class="text-right" style="width: 15%;">{{ "{:,.0f}".format(netto_osszesen).replace(',', ' ') }} Ft</td>
+            </tr>
+            {% endif %}
+            
+            {% if afa_osszesen != "" %}
+            <tr class="subtotal-row">
+                <td style="text-align: right;">ÁFA összesen:</td>
+                <td class="text-right" style="width: 15%;">{{ "{:,.0f}".format(afa_osszesen).replace(',', ' ') }} Ft</td>
+            </tr>
+            {% endif %}
+            
+            {% if brutto_osszesen != "" %}
+            <tr class="total-row">
+                <td style="text-align: right;">Mindösszesen fizetendő (Bruttó):</td>
+                <td class="total-price" style="width: 15%;">{{ "{:,.0f}".format(brutto_osszesen).replace(',', ' ') }} Ft</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <div class="conditions-wrapper">
+        
+        {% if feltetelek.ervenyesseg %}
+        <div class="condition-block">
+            <strong>Ajánlat érvényessége</strong>
+            <ul>
+                {% for item in feltetelek.ervenyesseg %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if feltetelek.fizetes %}
+        <div class="condition-block">
+            <strong>Fizetési feltételek</strong>
+            <ul>
+                {% for item in feltetelek.fizetes %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if feltetelek.utemezes %}
+        <div class="condition-block">
+            <strong>Ütemezés</strong>
+            <ul>
+                {% for item in feltetelek.utemezes %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if feltetelek.garancia %}
+        <div class="condition-block">
+            <strong>Garanciális feltételek</strong>
+            <ul>
+                {% for item in feltetelek.garancia %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+    </div>
+    
+    <div class="signature-container">
+        <div class="signature-box">
+            <div class="sign-space"></div>
+            <div class="signature-line">
+                {{ ugyfel.get('neve:', 'Ajánlatkérő') }}
+                <span class="signature-sub">Ajánlatkérő / Megrendelő</span>
+            </div>
+        </div>
+
+        <div class="signature-box right">
+            <div class="sign-space">
+                <img src="Aláírás.png" alt="OMS Aláírás" style="max-height: 70px; margin-bottom: 12px;">
+            </div>
+            <div class="signature-line">
+                OMS 24 Zrt.
+                <span class="signature-sub">Ajánlattevő / Vállalkozó</span>
+            </div>
+        </div>
+        <div class="clear"></div>
+    </div>
+
+</body>
+</html>
