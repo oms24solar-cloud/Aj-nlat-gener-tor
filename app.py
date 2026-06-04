@@ -14,8 +14,7 @@ st.set_page_config(page_title="OMS 24 Árajánlat", page_icon="📝", layout="wi
 # --- MAPPÁK BEÁLLÍTÁSA (FELHŐHÖZ) ---
 # A felhőben egy lokális mappát használunk a futás idejére
 mentesi_mappa = "Mentett_Ajanlatok_Felho"
-if not os.path.exists(mentesi_mappa):
-    os.makedirs(mentesi_mappa)
+os.makedirs(mentesi_mappa, exist_ok=True)
 
 # --- LOGÓ ÉS FEJLÉC ---
 if os.path.exists("OMS.png"):
